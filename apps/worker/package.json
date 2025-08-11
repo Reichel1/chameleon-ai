@@ -1,0 +1,28 @@
+{
+  "name": "@chameleon/worker",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@chameleon/core": "workspace:*",
+    "@chameleon/db": "workspace:*",
+    "@chameleon/tool-registry": "workspace:*",
+    "@chameleon/ai": "workspace:*",
+    "@chameleon/workflow-adapter": "workspace:*",
+    "@chameleon/email": "workspace:*",
+    "@chameleon/crm": "workspace:*",
+    "@chameleon/workflow": "workspace:*",
+    "bullmq": "^5.35.2",
+    "ioredis": "^5.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,227 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  members     Member[]
+  contacts    Contact[]
+  properties  Property[]
+  inquiries   Inquiry[]
+  mailboxes   Mailbox[]
+  threads     Thread[]
+  messages    Message[]
+  automations Automation[]
+  credentials Credential[]
+  events      Event[]
+
+  @@index([createdAt])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  members Member[]
+
+  @@index([email])
+}
+
+model Member {
+  id          String    @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        String    @default("member")
+  createdAt   DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId])
+  @@index([userId])
+}
+
+model Contact {
+  id          String    @id @default(cuid())
+  workspaceId String
+  email       String?
+  name        String?
+  phone       String?
+  meta        Json?
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id])
+  inquiries  Inquiry[]
+
+  @@unique([workspaceId, email])
+  @@index([workspaceId])
+  @@index([email])
+  @@index([deletedAt])
+}
+
+model Property {
+  id          String    @id @default(cuid())
+  workspaceId String
+  code        String
+  address     String?
+  meta        Json?
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id])
+  inquiries  Inquiry[]
+
+  @@unique([workspaceId, code])
+  @@index([workspaceId])
+  @@index([code])
+  @@index([deletedAt])
+}
+
+model Inquiry {
+  id          String    @id @default(cuid())
+  workspaceId String
+  contactId   String
+  propertyId  String?
+  status      String    @default("new")
+  meta        Json?
+  createdAt   DateTime  @default(now())
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id])
+  contact    Contact    @relation(fields: [contactId], references: [id])
+  property   Property?  @relation(fields: [propertyId], references: [id])
+  threads    Thread[]
+
+  @@index([workspaceId])
+  @@index([contactId])
+  @@index([propertyId])
+  @@index([status])
+}
+
+model Mailbox {
+  id          String    @id @default(cuid())
+  workspaceId String
+  provider    String
+  fromEmail   String
+  displayName String?
+  configJson  Json
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id])
+  threads    Thread[]
+
+  @@unique([workspaceId, fromEmail])
+  @@index([workspaceId])
+  @@index([fromEmail])
+  @@index([deletedAt])
+}
+
+model Thread {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  mailboxId     String
+  inquiryId     String?
+  subject       String?
+  status        String    @default("open")
+  lastMessageAt DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  deletedAt     DateTime?
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id])
+  mailbox    Mailbox    @relation(fields: [mailboxId], references: [id])
+  inquiry    Inquiry?   @relation(fields: [inquiryId], references: [id])
+  messages   Message[]
+
+  @@index([workspaceId])
+  @@index([mailboxId])
+  @@index([inquiryId])
+  @@index([status])
+  @@index([lastMessageAt])
+  @@index([deletedAt])
+}
+
+model Message {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  threadId        String
+  direction       String
+  headersJson     Json?
+  text            String?
+  html            String?
+  attachmentsJson Json?
+  messageId       String?
+  inReplyTo       String?
+  status          String    @default("sent")
+  createdAt       DateTime  @default(now())
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id])
+  thread     Thread     @relation(fields: [threadId], references: [id])
+
+  @@unique([messageId])
+  @@index([workspaceId])
+  @@index([threadId])
+  @@index([messageId])
+  @@index([direction])
+  @@index([createdAt])
+}
+
+model Automation {
+  id          String    @id @default(cuid())
+  workspaceId String
+  name        String
+  specJson    Json
+  backend     String    @default("n8n")
+  enabled     Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
+  @@index([enabled])
+  @@index([deletedAt])
+}
+
+model Credential {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  provider      String
+  name          String
+  encryptedJson String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id])
+
+  @@unique([workspaceId, provider, name])
+  @@index([workspaceId])
+  @@index([provider])
+  @@index([deletedAt])
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  workspaceId String
+  type        String
+  dataJson    Json
+  createdAt   DateTime @default(now())
+
+  workspace  Workspace  @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
+  @@index([type])
+  @@index([createdAt])
+}
